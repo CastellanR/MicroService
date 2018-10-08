@@ -9,10 +9,13 @@ UserFeedback Microservice
 	- [Modify Feedback](#modify-feedback)
   - [Delete Feedback](#delete-feedback)
 	
-- [RabbitMQ_GET](#rabbitmq_get)
-	- [Logout de Usuarios](#logout-de-usuarios)
+- [RabbitMQ_POST](#rabbitmq_post)
+	- [Product Validation](#product-validation)
+  - [Sending Feedback](#sending-feedback)
 	
-
+- [RabbitMQ_GET](#rabbitmq_get)
+	- [Product Validation](#product-validation)
+  - [User Logout](#user-logout)
 
 # <a name='feedback'></a> Feedback
 
@@ -289,9 +292,86 @@ HTTP/1.1 500 Internal Server Error
 HTTP/1.1 401 Unauthorized
 ```
 
+# <a name='rabbitmq_get'></a> RabbitMQ_POST
+
+## <a name='product-validation'></a> Product Validation
+[Back to top](#top)
+
+<p>Sending a validation request for a product</p>
+
+	DIRECT catalog/article-exist
+
+
+### Example
+
+Message
+
+```
+{
+  "type": "article-exist",
+  "queue": "feedback",
+  "exchange": "feedback",
+  "message" : {
+      "articleId": "{articleId}",
+  }
+}
+```
+
+## <a name='sending-feedback'></a> Sending Feedback
+[Back to top](#top)
+
+<p>Send new feedback message</p>
+
+	TOPIC  feedback/new-feedback
+
+
+
+
+### Example
+
+Message
+
+```
+{
+   "type": "new-feedback",
+   "queue": "feedback"
+   "message": {
+        "id" : "{ Feedback Id }"
+        "idUser" : "{ User Id }",
+        "text" :  "{ Feedback Content }",
+        "idProduct" : "{ Product Id }",
+        "rate" : "{ Feedback Rate }"
+     }
+}
+```
+
 # <a name='rabbitmq_get'></a> RabbitMQ_GET
 
-## <a name='Users Logout'></a> Users Logout
+## <a name='product-validation'></a> Product Validation
+[Back to top](#top)
+
+<p>Listening Validation messages</p>
+
+	DIRECT feedback/article-exist
+
+
+
+
+### Success Response
+
+Message
+
+```
+{
+  "type": "article-exist",
+  "message" : {
+      "articleId": "{articleId}",
+      "valid": True|False
+  }
+}
+```
+
+## <a name='users-logout'></a> Users Logout
 [Back to top](#top)
 
 <p>Listening Logout messages from auth</p>
