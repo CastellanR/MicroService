@@ -37,7 +37,9 @@ Body
   "idUser" : "{ User Id }",
   "text" :  "{ Feedback Content }",
   "idProduct" : "{ Product Id }",
-  "rate" : "{ Feedback Rate }"
+  "rate" : "{ Feedback Rate }",
+  "created" : "{ Creation Date }",
+  "updated" : "{ Modification Date }",
 }
 ```
 Auth Header
@@ -122,7 +124,9 @@ Response
     "idUser" : "{ User Id }",
     "text" :  "{ Feedback Content }",
     "idProduct" : "{ Product Id }",
-    "rate" : "{ Feedback Rate }"
+    "rate" : "{ Feedback Rate }",
+    "created" : "{ Creation Date }",
+    "updated" : "{ Modification Date }",
   }
 }
 ```
@@ -340,7 +344,9 @@ Message
         "idUser" : "{ User Id }",
         "text" :  "{ Feedback Content }",
         "idProduct" : "{ Product Id }",
-        "rate" : "{ Feedback Rate }"
+        "rate" : "{ Feedback Rate }",
+        "created" : "{ Creation Date }",
+        "updated" : "{ Modification Date }",
      }
 }
 ```
