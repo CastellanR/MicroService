@@ -6,8 +6,7 @@ UserFeedback Microservice
 - [Feedback](#feedback)
 	- [Create Feedback](#create-feedback)
 	- [Get  Feedbacks](#get-feedbacks)
-	- [Modify Feedback](#modify-feedback)
-  - [Delete Feedback](#delete-feedback)
+	- [Moderate Feedback](#moderate-feedback)
 	
 - [RabbitMQ_POST](#rabbitmq_post)
 	- [Product Validation](#product-validation)
@@ -38,8 +37,6 @@ Body
   "text" :  "{ Feedback Content }",
   "idProduct" : "{ Product Id }",
   "rate" : "{ Feedback Rate }",
-  "created" : "{ Creation Date }",
-  "updated" : "{ Modification Date }",
 }
 ```
 Auth Header
@@ -125,6 +122,7 @@ Response
     "text" :  "{ Feedback Content }",
     "idProduct" : "{ Product Id }",
     "rate" : "{ Feedback Rate }",
+    "moderated" : "{ Feedback Moderate Status Boolean }"
     "created" : "{ Creation Date }",
     "updated" : "{ Modification Date }",
   }
@@ -161,10 +159,10 @@ HTTP/1.1 500 Internal Server Error
 ```
 HTTP/1.1 401 Unauthorized
 ```
-## <a name='modify-feedback'></a> Modify Feedback
+## <a name='moderate-feedback'></a> Moderate Feedback
 [Back to top](#top)
 
-<p>Modify a Feedback</p>
+<p>Moderate a Feedback</p>
 
 	POST /v1/feedback/:id
 
@@ -176,74 +174,6 @@ Body
 
 ```
 {
-  "text" :  "{ Feedback Content }",
-  "rate" : "{ Feedback Rate }"
-}
-
-```
-Auth Header
-
-```
-Authorization=bearer {token}
-```
-
-### Success Response
-
-Response
-
-```
-HTTP/1.1 200 OK
-{
-  "id": "{ Feedback Id }"
-}
-```
-400 Bad Request
-
-```
-HTTP/1.1 400 Bad Request
-{
-   "messages" : [
-     {
-       "path" : "{Property's Name}",
-       "message" : "{ Error cause}"
-     },
-     ...
-  ]
-}
-```
-500 Server Error
-
-```
-HTTP/1.1 500 Internal Server Error
-{
-   "error" : "Not Found"
-}
-```
-
-
-### Error Response
-
-401 Unauthorized
-
-```
-HTTP/1.1 401 Unauthorized
-```
-
-## <a name='delete-feedback'></a> Delete Feedback
-[Back to top](#top)
-
-<p>Delete a Feedback</p>
-
-	DELETE /v1/feedback/:id
-
-
-
-### Examples
-
-Body
-
-```
-{
   "id": "{ Feedback Id }"
 }
 
@@ -261,7 +191,8 @@ Response
 ```
 HTTP/1.1 200 OK
 {
-  "id": "{ Feedback Id }"
+  "id": "{ Feedback Id }",
+  "moderated" : "{ True }",
 }
 ```
 400 Bad Request
@@ -272,7 +203,7 @@ HTTP/1.1 400 Bad Request
    "messages" : [
      {
        "path" : "{Property's Name}",
-       "message" : "{ Error cause}"
+       "message" : "{ Error cause }"
      },
      ...
   ]
