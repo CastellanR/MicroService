@@ -3,9 +3,9 @@ package routes
 import (
 	"strings"
 
+	"github.com/CastellanR/UserFeedback-Microservice/security"
+	"github.com/CastellanR/UserFeedback-Microservice/tools/errors"
 	"github.com/gin-gonic/gin"
-	"github.com/nmarsollier/authgo/tools/errors"
-	"github.com/nmarsollier/imagego/security"
 )
 
 // get token from Authorization header

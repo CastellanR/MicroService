@@ -1,9 +1,9 @@
 package routes
 
 import (
+	"github.com/CastellanR/UserFeedback-Microservice/feedback"
 	"github.com/CastellanR/UserFeedback-Microservice/tools/errors"
 	"github.com/gin-gonic/gin"
-	"github.com/nmarsollier/UserFeedback-Microservice/feedback"
 )
 
 // NewFeedback Create feedback
@@ -96,7 +96,7 @@ func NewFeedback(c *gin.Context) {
  * @apiUse ParamValidationErrors
  * @apiUse OtherErrors
 */
-func GetFeedback(c *gin.Context) {
+func GetFeedbacks(c *gin.Context) {
 	if err := validateAuthentication(c); err != nil {
 		errors.Handle(c, err)
 		return

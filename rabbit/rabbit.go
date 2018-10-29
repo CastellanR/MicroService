@@ -32,6 +32,91 @@ func Init() {
 }
 
 /**
+ * @api {direct} catalog/article-exist Product Validation
+ * @apiGroup RabbitMQ POST
+ *
+ * @apiDescription Sending a validation request for a product.
+ *
+ * @apiSuccessExample {json} Mensaje
+ *     {
+			"type": "article-exist",
+			"queue": "feedback",
+			"exchange": "feedback",
+			"message" : {
+				"articleId": "{articleId}",
+			}
+		}
+ */
+
+func productValidation(productID,cartID) error {
+	conn, err := amqp.Dial(env.Get().RabbitURL)
+	if err != nil {
+		return err
+	}
+	defer conn.Close()
+
+	chn, err := conn.Channel()
+	if err != nil {
+		return err
+	}
+	defer chn.Close()
+
+	err = chn.ExchangeDeclare(
+		"cart",   // name
+		"article-exist", // type
+		false,    // durable
+		false,    // auto-deleted
+		false,    // internal
+		false,    // no-wait
+		nil,      // arguments
+	)
+	if err != nil {
+		return err
+	}
+
+	queue, err := chn.QueueDeclare(
+		"cart", // name
+		true,  // durable
+		false,  // delete when unused
+		false,   // exclusive
+		false,  // no-wait
+		nil,    // arguments
+	)
+	if err != nil {
+		return err
+	}
+
+	err = chn.QueueBind(
+		queue.Name, // queue name
+		"",         // routing key
+		"",     // exchange
+		false,
+		nil)
+	if err != nil {
+		return err
+	}
+	
+	err = ch.Publish(
+		"cart",           // exchange
+		q.Name,       // routing key
+		false,        // mandatory
+		false,
+		amqp.Publishing{
+				DeliveryMode: amqp.Persistent,
+				ContentType:  "text/plain",
+				Body:         []byte(cartID,productID),
+		}
+	)
+
+	if err != nil {
+		return err
+	}	
+
+	return nil
+}
+
+
+/**
  * @api {fanout} auth/logout Logout de Usuarios
  * @apiGroup RabbitMQ GET
  *

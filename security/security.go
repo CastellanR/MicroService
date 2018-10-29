@@ -7,15 +7,15 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/nmarsollier/imagego/tools/env"
-	"github.com/nmarsollier/imagego/tools/errors"
+	"github.com/CastellanR/UserFeedback-Microservice/tools/env"
+	"github.com/CastellanR/UserFeedback-Microservice/tools/errors"
 	gocache "github.com/patrickmn/go-cache"
 	validator "gopkg.in/go-playground/validator.v9"
 )
 
 var cache = gocache.New(60*time.Minute, 10*time.Minute)
 
-// User es el usuario logueado
+// User
 type User struct {
 	ID          string   `json:"id"  validate:"required"`
 	Name        string   `json:"name"  validate:"required"`
@@ -23,11 +23,11 @@ type User struct {
 	Login       string   `json:"login"  validate:"required"`
 }
 
-// Validate valida si el token es valido
+// Validate token
 /**
  * @apiDefine AuthHeader
  *
- * @apiExample {String} Header Autorización
+ * @apiExample {String} Auth Header
  *    Authorization=bearer {token}
  *
  * @apiErrorExample 401 Unauthorized
@@ -46,14 +46,14 @@ func Validate(token string) (*User, error) {
 		return nil, errors.Unauthorized
 	}
 
-	// Todo bien, se agrega al cache y se retorna
+	// the token is added to cache and returned
 	cache.Set(token, user, gocache.DefaultExpiration)
 
 	return user, nil
 }
 
 func getRemote(token string) (*User, error) {
-	// Buscamos el usuario remoto
+	// Search remote user
 	req, err := http.NewRequest("GET", env.Get().SecurityServerURL+"/v1/users/current", nil)
 	if err != nil {
 		return nil, errors.Unauthorized
@@ -78,8 +78,8 @@ func getRemote(token string) (*User, error) {
 	return user, nil
 }
 
-// Invalidate invalida un token del cache
+// Invalidate cache token
 func Invalidate(token string) {
 	cache.Delete(token[7:])
-	log.Output(1, fmt.Sprintf("Token invalidado: %s", token))
+	log.Output(1, fmt.Sprintf("Token invalid: %s", token))
 }
