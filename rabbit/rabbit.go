@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"time"
-
 	"github.com/CastellanR/UserFeedback-Microservice/security"
 	"github.com/CastellanR/UserFeedback-Microservice/tools/env"
 	"github.com/CastellanR/UserFeedback-Microservice/tools/errors"
@@ -32,23 +31,24 @@ func Init() {
 }
 
 /**
- * @api {direct} catalog/article-exist Product Validation
+ * @api {direct} cart/article-exist Product Validation
  * @apiGroup RabbitMQ POST
  *
  * @apiDescription Sending a validation request for a product.
  *
- * @apiSuccessExample {json} Mensaje
+ * @apiSuccessExample {json} Message
  *     {
 			"type": "article-exist",
-			"queue": "feedback",
-			"exchange": "feedback",
+			"queue": "cart",
+			"exchange": "cart",
 			"message" : {
-				"articleId": "{articleId}",
+				"referenceId": "{cartId}",
+ *             	"articleId": "{articleId}",
 			}
 		}
  */
 
-func productValidation(productID,cartID) error {
+func ProductValidation(productID,cartID) error {
 	conn, err := amqp.Dial(env.Get().RabbitURL)
 	if err != nil {
 		return err
@@ -59,20 +59,7 @@ func productValidation(productID,cartID) error {
 	if err != nil {
 		return err
 	}
-	defer chn.Close()
-
-	err = chn.ExchangeDeclare(
-		"cart",   // name
-		"article-exist", // type
-		false,    // durable
-		false,    // auto-deleted
-		false,    // internal
-		false,    // no-wait
-		nil,      // arguments
-	)
-	if err != nil {
-		return err
-	}
+	defer chn.Close()	
 
 	queue, err := chn.QueueDeclare(
 		"cart", // name
@@ -85,20 +72,130 @@ func productValidation(productID,cartID) error {
 	if err != nil {
 		return err
 	}
+	
+	msg, err = ch.Consume(
+		queue.Name, // queue
+		"",     // consumer
+		false,  // auto-ack
+		false,  // exclusive
+		false,  // no-local
+		false,  // no-wait
+		nil,    // args
+)
 
-	err = chn.QueueBind(
-		queue.Name, // queue name
-		"",         // routing key
-		"",     // exchange
-		false,
-		nil)
+	if err != nil {
+		return err
+	}	
+
+	return msg
+}
+
+/**
+ * @api {fanout} feedback/ Send Feedback
+ * @apiGroup RabbitMQ POST
+ *
+ * @apiDescription Sending new feedback.
+ *
+ * @apiSuccessExample {json} Message
+ *     {
+			"type": "article-exist",
+			"queue": "feedback",
+			"exchange": "feedback",
+			"message" : {
+				"articleId": "{articleId}",
+			}
+		}
+ */
+
+ func sendFeedback(feedback) error {
+	conn, err := amqp.Dial(env.Get().RabbitURL)
+	if err != nil {
+		return err
+	}
+	defer conn.Close()
+
+	chn, err := conn.Channel()
+	if err != nil {
+		return err
+	}
+	defer chn.Close()	
+
+	queue, err := chn.ExchangeDeclare(
+		"feedback_topic", // name
+		"topic",      // type
+		true,         // durable
+		false,        // auto-deleted
+		false,        // internal
+		false,        // no-wait
+		nil,          // arguments
+)
 	if err != nil {
 		return err
 	}
 	
 	err = ch.Publish(
-		"cart",           // exchange
-		q.Name,       // routing key
+		"feedback_topic",           // exchange
+		"feedback",       // routing key
+		false,        // mandatory
+		false,		// immediate
+		amqp.Publishing{
+			ContentType:  "text/plain",
+			Body:         []byte(feedback),
+		}
+	)
+
+	if err != nil {
+		return err
+	}	
+
+	return nil
+}
+
+/**
+ * @api {direct} feedback/article-validation Product Validation
+ * @apiGroup RabbitMQ GET
+ *
+ * @apiDescription Listen validation product messages from cart.
+ *
+ * @apiSuccessExample {json} Message
+ * 		{
+ *      	"type": "article-exist",
+ *			"message" : 
+ *				{
+ *					"articleId": "{articleId}",
+ *					"valid": True|False
+ *				}
+ *      }
+ */
+
+ func listenProductValidation() error {
+	conn, err := amqp.Dial(env.Get().RabbitURL)
+	if err != nil {
+		return err
+	}
+	defer conn.Close()
+
+	chn, err := conn.Channel()
+	if err != nil {
+		return err
+	}
+	defer chn.Close()	
+
+	queue, err := chn.QueueDeclare(
+		"cart", // name
+		true,  // durable
+		false,  // delete when unused
+		false,   // exclusive
+		false,  // no-wait
+		nil,    // arguments
+	)
+	if err != nil {
+		return err
+	}
+	
+	err = ch.Publish(
+		"",           // exchange
+		queue.Name,       // routing key
 		false,        // mandatory
 		false,
 		amqp.Publishing{
@@ -115,14 +212,13 @@ func productValidation(productID,cartID) error {
 	return nil
 }
 
-
 /**
  * @api {fanout} auth/logout Logout de Usuarios
  * @apiGroup RabbitMQ GET
  *
- * @apiDescription Escucha de mensajes logout desde auth.
+ * @apiDescription Escucha de Messages logout desde auth.
  *
- * @apiSuccessExample {json} Mensaje
+ * @apiSuccessExample {json} Message
  *     {
  *        "type": "logout",
  *        "message": "{tokenId}"

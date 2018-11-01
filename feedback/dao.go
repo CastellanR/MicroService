@@ -36,6 +36,19 @@ func Find(productID string) (*Feedback, error) {
 	return &result, nil
 }
 
+func FindByIdAndUpdate(feedbackID string) (*Feedback, error) {
+	client := client()
+	data, err := client.Get(feedbackID).Result()
+	if err != nil {
+		return nil, errors.NotFound
+	}
+
+	result := Feedback{
+		ID: feedbackID,
+	}
+	return &result, nil
+}
+
 func client() *redis.Client {
 	return redis.NewClient(&redis.Options{
 		Addr:     env.Get().RedisURL,
