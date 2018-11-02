@@ -162,7 +162,7 @@ func ModerateFeedback(c *gin.Context) {
 	var data *feedback.Feedback
 	var err error
 
-	id, err := feedback.FindByIdAndUpdate(feedbackID)
+	id, err := feedback.FindByIDAndUpdate(feedbackID)
 
 	if err != nil {
 		errors.Handle(c, err)

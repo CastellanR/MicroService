@@ -3,7 +3,7 @@ package feedback
 import (
 	"strings"
 
-	"github.com/CastellanR/UserMicroservice-User/tools/errors"
+	"github.com/CastellanR/UserFeedback-Microservice/tools/errors"
 	uuid "github.com/satori/go.uuid"
 	validator "gopkg.in/go-playground/validator.v9"
 )

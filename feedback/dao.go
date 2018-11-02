@@ -36,7 +36,7 @@ func Find(productID string) (*Feedback, error) {
 	return &result, nil
 }
 
-func FindByIdAndUpdate(feedbackID string) (*Feedback, error) {
+func FindByIDAndUpdate(feedbackID string) (*Feedback, error) {
 	client := client()
 	data, err := client.Get(feedbackID).Result()
 	if err != nil {
