@@ -1,8 +1,6 @@
 package feedback
 
 import (
-	"strings"
-
 	"github.com/CastellanR/UserFeedback-Microservice/tools/errors"
 	uuid "github.com/satori/go.uuid"
 	validator "gopkg.in/go-playground/validator.v9"
@@ -15,7 +13,7 @@ type Feedback struct {
 	text      string `json:message validate:"required"`
 	IDProduct string `json:idProduct validate:"required"`
 	rate      int    `json:rate  validate:"required"`
-	moderated bool   `json:idUser validate:"required"`
+	moderated bool   `json:moderated validate:"required"`
 	created   string `json:created validate:"required"`
 	updated   string `json:updated validate:"required"`
 }
@@ -27,8 +25,8 @@ func New() *Feedback {
 		IDUser:    "",
 		text:      "",
 		IDProduct: "",
-		rate:      "",
-		moderated: "",
+		rate:      0,
+		moderated: false,
 		created:   "",
 		updated:   "",
 	}
@@ -41,9 +39,6 @@ func (e *Feedback) validateSchema() error {
 	validate := validator.New()
 	if err := validate.Struct(e); err != nil {
 		return err
-	}
-	if strings.Index(e.Feedback, "data:feedback/") < 0 {
-		return ErrData
 	}
 	return nil
 }

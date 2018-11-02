@@ -13,7 +13,14 @@ func Insert(feedback *Feedback) (string, error) {
 	}
 
 	client := client()
-	err := client.Set(feedback.ID, feedback.Feedback, 0).Err()
+	err := client.Set(
+		feedback.ID,
+		feedback.IDProduct,
+		feedback.IDUser,
+		feedback.moderated,
+		feedback.rate,
+		feedback.text
+		,0).Err()
 	if err != nil {
 		return "", err
 	}

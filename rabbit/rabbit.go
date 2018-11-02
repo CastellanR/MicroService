@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"time"
+
 	"github.com/CastellanR/UserFeedback-Microservice/security"
 	"github.com/CastellanR/UserFeedback-Microservice/tools/env"
 	"github.com/CastellanR/UserFeedback-Microservice/tools/errors"
@@ -46,9 +47,9 @@ func Init() {
  *             	"articleId": "{articleId}",
 			}
 		}
- */
+*/
 
-func ProductValidation(productID,cartID) error {
+func ProductValidation(productID, cartID) error {
 	conn, err := amqp.Dial(env.Get().RabbitURL)
 	if err != nil {
 		return err
@@ -59,33 +60,33 @@ func ProductValidation(productID,cartID) error {
 	if err != nil {
 		return err
 	}
-	defer chn.Close()	
+	defer chn.Close()
 
 	queue, err := chn.QueueDeclare(
 		"cart", // name
-		true,  // durable
+		true,   // durable
 		false,  // delete when unused
-		false,   // exclusive
+		false,  // exclusive
 		false,  // no-wait
 		nil,    // arguments
 	)
 	if err != nil {
 		return err
 	}
-	
+
 	msg, err = ch.Consume(
 		queue.Name, // queue
-		"",     // consumer
-		false,  // auto-ack
-		false,  // exclusive
-		false,  // no-local
-		false,  // no-wait
-		nil,    // args
-)
+		"",         // consumer
+		false,      // auto-ack
+		false,      // exclusive
+		false,      // no-local
+		false,      // no-wait
+		nil,        // args
+	)
 
 	if err != nil {
 		return err
-	}	
+	}
 
 	return msg
 }
@@ -105,9 +106,9 @@ func ProductValidation(productID,cartID) error {
 				"articleId": "{articleId}",
 			}
 		}
- */
+*/
 
- func sendFeedback(feedback) error {
+func sendFeedback(feedback) error {
 	conn, err := amqp.Dial(env.Get().RabbitURL)
 	if err != nil {
 		return err
@@ -118,35 +119,35 @@ func ProductValidation(productID,cartID) error {
 	if err != nil {
 		return err
 	}
-	defer chn.Close()	
+	defer chn.Close()
 
 	queue, err := chn.ExchangeDeclare(
 		"feedback_topic", // name
-		"topic",      // type
-		true,         // durable
-		false,        // auto-deleted
-		false,        // internal
-		false,        // no-wait
-		nil,          // arguments
-)
+		"topic",          // type
+		true,             // durable
+		false,            // auto-deleted
+		false,            // internal
+		false,            // no-wait
+		nil,              // arguments
+	)
 	if err != nil {
 		return err
 	}
-	
+
 	err = ch.Publish(
-		"feedback_topic",           // exchange
+		"feedback_topic", // exchange
 		"feedback",       // routing key
-		false,        // mandatory
-		false,		// immediate
+		false,            // mandatory
+		false,            // immediate
 		amqp.Publishing{
-			ContentType:  "text/plain",
-			Body:         []byte(feedback),
-		}
+			ContentType: "text/plain",
+			Body:        []byte(feedback),
+		},
 	)
 
 	if err != nil {
 		return err
-	}	
+	}
 
 	return nil
 }
@@ -160,7 +161,7 @@ func ProductValidation(productID,cartID) error {
  * @apiSuccessExample {json} Message
  * 		{
  *      	"type": "article-exist",
- *			"message" : 
+ *			"message" :
  *				{
  *					"articleId": "{articleId}",
  *					"valid": True|False
@@ -168,7 +169,7 @@ func ProductValidation(productID,cartID) error {
  *      }
  */
 
- func listenProductValidation() error {
+func listenProductValidation() error {
 	conn, err := amqp.Dial(env.Get().RabbitURL)
 	if err != nil {
 		return err
@@ -179,35 +180,35 @@ func ProductValidation(productID,cartID) error {
 	if err != nil {
 		return err
 	}
-	defer chn.Close()	
+	defer chn.Close()
 
 	queue, err := chn.QueueDeclare(
 		"cart", // name
-		true,  // durable
+		true,   // durable
 		false,  // delete when unused
-		false,   // exclusive
+		false,  // exclusive
 		false,  // no-wait
 		nil,    // arguments
 	)
 	if err != nil {
 		return err
 	}
-	
+
 	err = ch.Publish(
-		"",           // exchange
-		queue.Name,       // routing key
-		false,        // mandatory
+		"",         // exchange
+		queue.Name, // routing key
+		false,      // mandatory
 		false,
 		amqp.Publishing{
-				DeliveryMode: amqp.Persistent,
-				ContentType:  "text/plain",
-				Body:         []byte(cartID,productID),
-		}
+			DeliveryMode: amqp.Persistent,
+			ContentType:  "text/plain",
+			Body:         []byte(cartID, productID),
+		},
 	)
 
 	if err != nil {
 		return err
-	}	
+	}
 
 	return nil
 }
