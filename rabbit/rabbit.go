@@ -49,7 +49,8 @@ func Init() {
 		}
 */
 
-func ProductValidation(productID, cartID) error {
+// ProductValidation validate the product
+func ProductValidation(productID string, cartID string) error {
 	conn, err := amqp.Dial(env.Get().RabbitURL)
 	if err != nil {
 		return err
@@ -74,21 +75,28 @@ func ProductValidation(productID, cartID) error {
 		return err
 	}
 
-	msg, err = ch.Consume(
-		queue.Name, // queue
-		"",         // consumer
-		false,      // auto-ack
-		false,      // exclusive
-		false,      // no-local
-		false,      // no-wait
-		nil,        // args
+	type msj struct {
+		productID string `json: "productID"`
+		cartID    string `json: "cardID"`
+	}
+
+	err = chn.Publish(
+		"",         // exchange
+		queue.Name, // routing key
+		false,      // mandatory
+		false,      // immediate
+		amqp.Publishing{
+			DeliveryMode: amqp.Persistent,
+			ContentType:  "text/plain",
+			Body:         []byte(`msj{productID, cartID}`),
+		},
 	)
 
 	if err != nil {
 		return err
 	}
 
-	return msg
+	return err
 }
 
 /**
@@ -108,7 +116,7 @@ func ProductValidation(productID, cartID) error {
 		}
 */
 
-func sendFeedback(feedback) error {
+func sendFeedback(feedback string) error {
 	conn, err := amqp.Dial(env.Get().RabbitURL)
 	if err != nil {
 		return err
@@ -121,7 +129,7 @@ func sendFeedback(feedback) error {
 	}
 	defer chn.Close()
 
-	queue, err := chn.ExchangeDeclare(
+	err = chn.ExchangeDeclare(
 		"feedback_topic", // name
 		"topic",          // type
 		true,             // durable
@@ -134,7 +142,7 @@ func sendFeedback(feedback) error {
 		return err
 	}
 
-	err = ch.Publish(
+	err = chn.Publish(
 		"feedback_topic", // exchange
 		"feedback",       // routing key
 		false,            // mandatory
@@ -194,20 +202,22 @@ func listenProductValidation() error {
 		return err
 	}
 
-	err = ch.Publish(
-		"",         // exchange
-		queue.Name, // routing key
-		false,      // mandatory
-		false,
-		amqp.Publishing{
-			DeliveryMode: amqp.Persistent,
-			ContentType:  "text/plain",
-			Body:         []byte(cartID, productID),
-		},
+	msg, err := chn.Consume(
+		queue.Name, // queue
+		"",         // consumer
+		true,       // auto-ack
+		false,      // exclusive
+		false,      // no-local
+		false,      // no-wait
+		nil,        // args
 	)
 
 	if err != nil {
 		return err
+	}
+
+	for d := range msg {
+		log.Printf("Received a message: %s", d.Body)
 	}
 
 	return nil

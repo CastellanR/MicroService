@@ -50,9 +50,12 @@ func NewFeedback(c *gin.Context) {
 	}
 
 	fdbk := feedback.New()
-	fdbk.Feedback = body.feedback
+	fdbk.IDProduct = body.IDProduct
+	fdbk.IDUser = body.IDUser
+	fdbk.text = body.text
+	fdbk.rate = body.rate
 
-	id, err := feedback.Insert(fdbk)
+	id, err := feedback.Insert(fdbk, body.cartID)
 
 	if err != nil {
 		errors.Handle(c, err)

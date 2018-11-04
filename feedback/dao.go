@@ -3,13 +3,19 @@ package feedback
 import (
 	"github.com/CastellanR/UserFeedback-Microservice/tools/env"
 	"github.com/CastellanR/UserFeedback-Microservice/tools/errors"
+	"github.com/CastellanR/UserFeedback-Microservice/rabbit"
 	"github.com/go-redis/redis"
 )
 
 // Insert feedback into Database
-func Insert(feedback *Feedback) (string, error) {
+func Insert(feedback *Feedback, cartID) (string, error) {
 	if err := feedback.validateSchema(); err != nil {
 		return "", err
+	}
+	err := productValidation(feedback.IDProduct, cartID)
+
+	if err != nil {
+		return "Producto no valido", err
 	}
 
 	client := client()
@@ -25,6 +31,7 @@ func Insert(feedback *Feedback) (string, error) {
 		return "", err
 	}
 
+	sendFeedback(feedback);
 	return feedback.ID, nil
 }
 
@@ -36,24 +43,31 @@ func Find(productID string) (*Feedback, error) {
 		return nil, errors.NotFound
 	}
 
-	result := Feedback{
-		ID:       productID,
-		Feedback: data,
-	}
+	[]Feedback result := data
 	return &result, nil
 }
 
-func FindByIDAndUpdate(feedbackID string) (*Feedback, error) {
+func FindByIDAndUpdate(feedbackID string) (ID, error) {
 	client := client()
 	data, err := client.Get(feedbackID).Result()
 	if err != nil {
 		return nil, errors.NotFound
 	}
+	moderated = true
 
-	result := Feedback{
-		ID: feedbackID,
+	err := client.Set(
+		data.ID,
+		data.IDProduct,
+		data.IDUser,
+		moderated,
+		data.rate,
+		data.text
+		,0).Err()
+		
+	if err != nil {
+		return "", err
 	}
-	return &result, nil
+	return data.ID, nil
 }
 
 func client() *redis.Client {
