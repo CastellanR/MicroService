@@ -6,6 +6,15 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+//NewFeedbackRequest structure
+type NewFeedbackRequest struct {
+	IDUser    string `json:"id" binding:"required"`
+	text      string `json:"text" binding:"required"`
+	IDProduct string `json:"idproduct" binding:"required"`
+	rate      int    `json:"rate" binding:"required"`
+	cartID    string
+}
+
 // NewFeedback Create feedback
 /**
  * @api {post} /v1/feedback Create Feedback
@@ -34,15 +43,13 @@ import (
  * @apiUse OtherErrors
 */
 func NewFeedback(c *gin.Context) {
+
+	body := NewFeedbackRequest{}
+
 	if err := validateAuthentication(c); err != nil {
 		errors.Handle(c, err)
 		return
 	}
-
-	type NewRequest struct {
-		Feedback string `json:"feedback" binding:"required"`
-	}
-	body := NewRequest{}
 
 	if err := c.ShouldBindJSON(&body); err != nil {
 		errors.Handle(c, err)

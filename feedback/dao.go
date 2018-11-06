@@ -1,79 +1,98 @@
 package feedback
 
 import (
-	"github.com/CastellanR/UserFeedback-Microservice/tools/env"
-	"github.com/CastellanR/UserFeedback-Microservice/tools/errors"
-	"github.com/CastellanR/UserFeedback-Microservice/rabbit"
-	"github.com/go-redis/redis"
+	"context"
+	"log"
+
+	"github.com/mongodb/mongo-go-driver/bson"
+	"github.com/mongodb/mongo-go-driver/bson/objectid"
+	"github.com/mongodb/mongo-go-driver/mongo"
+	"github.com/nmarsollier/authgo/tools/db"
+	"github.com/nmarsollier/authgo/tools/errors"
 )
 
-// Insert feedback into Database
-func Insert(feedback *Feedback, cartID) (string, error) {
+// New dao es interno a este modulo, nadie fuera del modulo tiene acceso
+func getDao() (db.Collection, error) {
+	database, err := db.Get()
+	if err != nil {
+		return nil, err
+	}
+
+	collection := database.Collection("feedback")
+
+	_, err = collection.Indexes().CreateOne(
+		context.Background(),
+		mongo.IndexModel{
+			Keys: bson.NewDocument(
+				bson.EC.String("idProduct", ""),
+			),
+			Options: bson.NewDocument(
+				bson.EC.Boolean("unique", true),
+			),
+		},
+	)
+	if err != nil {
+		log.Output(1, err.Error())
+	}
+
+	coll := db.WrapCollection(collection)
+	return coll, nil
+}
+
+// Insert into Database
+func Insert(feedback *Feedback, cartID string) (string, error) {
+
 	if err := feedback.validateSchema(); err != nil {
 		return "", err
 	}
-	err := productValidation(feedback.IDProduct, cartID)
 
-	if err != nil {
-		return "Producto no valido", err
+	if _, err := getDao().InsertOne(context.Background(), feed); err != nil {
+		return nil, err
 	}
 
-	client := client()
-	err := client.Set(
-		feedback.ID,
-		feedback.IDProduct,
-		feedback.IDUser,
-		feedback.moderated,
-		feedback.rate,
-		feedback.text
-		,0).Err()
-	if err != nil {
-		return "", err
-	}
-
-	sendFeedback(feedback);
-	return feedback.ID, nil
+	return feed.ID, nil
 }
 
 // Find  and return the feedbacks from database
-func Find(productID string) (*Feedback, error) {
-	client := client()
-	data, err := client.Get(productID).Result()
+func Find(productID string) ([]*Feedback, error) {
+
+	filter := bson.NewDocument(bson.EC.String("productID", productID))
+	cur, err := getDao().Find(context.Background(), filter, nil)
+	defer cur.Close(context.Background())
+
 	if err != nil {
-		return nil, errors.NotFound
+		return nil, err
 	}
 
-	[]Feedback result := data
-	return &result, nil
+	feedbacks := []*Feedback{}
+	for cur.Next(context.Background()) {
+		feedback := &Feedback{}
+		if err := cur.Decode(feedback); err != nil {
+			return nil, err
+		}
+		feedbacks = append(feedbacks, feedback)
+	}
+
+	return feedbacks, nil
 }
 
-func FindByIDAndUpdate(feedbackID string) (ID, error) {
-	client := client()
-	data, err := client.Get(feedbackID).Result()
-	if err != nil {
-		return nil, errors.NotFound
-	}
-	moderated = true
+// FindByIDAndUpdate  and update a feedback from database
+func FindByIDAndUpdate(feedbackID string) (string, error) {
 
-	err := client.Set(
-		data.ID,
-		data.IDProduct,
-		data.IDUser,
-		moderated,
-		data.rate,
-		data.text
-		,0).Err()
-		
+	_id, err := objectid.FromHex(feedbackID)
+
+	if err != nil {
+		return nil, errors.ErrID
+	}
+
+	filter := bson.NewDocument(bson.EC.ObjectID("_id", _id))
+	change := bson.NewDocument(bson.EC.String("moderated", true))
+
+	feedback, err := getDao().FindOneAndUpdate(context.Background(), filter, change)
+
 	if err != nil {
 		return "", err
 	}
-	return data.ID, nil
-}
 
-func client() *redis.Client {
-	return redis.NewClient(&redis.Options{
-		Addr:     env.Get().RedisURL,
-		Password: "",
-		DB:       0,
-	})
+	return feedbackID, nil
 }

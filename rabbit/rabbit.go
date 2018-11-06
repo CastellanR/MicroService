@@ -20,6 +20,11 @@ type message struct {
 	Message string `json:"message"`
 }
 
+type feedbackParams struct {
+	productID string `json:"productID"`
+	cartID    string `json:"cardID"`
+}
+
 // Init se queda escuchando broadcasts de logout
 func Init() {
 	go func() {
@@ -64,21 +69,20 @@ func ProductValidation(productID string, cartID string) error {
 	defer chn.Close()
 
 	queue, err := chn.QueueDeclare(
-		"cart", // name
-		true,   // durable
-		false,  // delete when unused
-		false,  // exclusive
-		false,  // no-wait
-		nil,    // arguments
+		"catalog", // name
+		true,      // durable
+		false,     // delete when unused
+		false,     // exclusive
+		false,     // no-wait
+		nil,       // arguments
 	)
 	if err != nil {
 		return err
 	}
 
-	type msj struct {
-		productID string `json: "productID"`
-		cartID    string `json: "cardID"`
-	}
+	msg := feedbackParams{}
+	msg.cartID = cartID
+	msg.productID = productID
 
 	err = chn.Publish(
 		"",         // exchange
@@ -88,7 +92,7 @@ func ProductValidation(productID string, cartID string) error {
 		amqp.Publishing{
 			DeliveryMode: amqp.Persistent,
 			ContentType:  "text/plain",
-			Body:         []byte(`msj{productID, cartID}`),
+			Body:         []byte(`msg`),
 		},
 	)
 
@@ -191,12 +195,12 @@ func listenProductValidation() error {
 	defer chn.Close()
 
 	queue, err := chn.QueueDeclare(
-		"cart", // name
-		true,   // durable
-		false,  // delete when unused
-		false,  // exclusive
-		false,  // no-wait
-		nil,    // arguments
+		"catalog", // name
+		true,      // durable
+		false,     // delete when unused
+		false,     // exclusive
+		false,     // no-wait
+		nil,       // arguments
 	)
 	if err != nil {
 		return err

@@ -1,34 +1,36 @@
 package feedback
 
 import (
+	"time"
+
 	"github.com/CastellanR/UserFeedback-Microservice/tools/errors"
-	uuid "github.com/satori/go.uuid"
+	"github.com/mongodb/mongo-go-driver/bson/objectid"
 	validator "gopkg.in/go-playground/validator.v9"
 )
 
 // Feedback structure
 type Feedback struct {
-	ID        string `json:id validate:"required"`
-	IDUser    string `json:idUser validate:"required"`
-	text      string `json:message validate:"required"`
-	IDProduct string `json:idProduct validate:"required"`
-	rate      int    `json:rate  validate:"required"`
-	moderated bool   `json:moderated validate:"required"`
-	created   string `json:created validate:"required"`
-	updated   string `json:updated validate:"required"`
+	ID        objectid.ObjectID `bson:"_id"`
+	IDUser    string            `bson:"idUser" validate:"required"`
+	text      string            `bson:"message" validate:"required"`
+	IDProduct string            `bson:"idProduct" validate:"required"`
+	rate      int               `bson:"rate"  validate:"required"`
+	moderated bool              `bson:"moderated" validate:"required"`
+	created   time.Time         `bson:"created" validate:"required"`
+	updated   time.Time         `bson:"updated" validate:"required"`
 }
 
 // New create feedback
 func New() *Feedback {
 	return &Feedback{
-		ID:        uuid.NewV4().String(),
+		ID:        objectid.New(),
 		IDUser:    "",
 		text:      "",
 		IDProduct: "",
 		rate:      0,
 		moderated: false,
-		created:   "",
-		updated:   "",
+		created:   time.Now(),
+		updated:   time.Now(),
 	}
 }
 
