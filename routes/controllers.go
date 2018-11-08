@@ -8,11 +8,21 @@ import (
 
 //NewFeedbackRequest structure
 type NewFeedbackRequest struct {
-	IDUser    string `json:"id" binding:"required"`
+	IDUser    string `json:"idUser" binding:"required"`
 	text      string `json:"text" binding:"required"`
 	IDProduct string `json:"idproduct" binding:"required"`
 	rate      int    `json:"rate" binding:"required"`
 	cartID    string
+}
+
+//GetFeedbacksRequest structure
+type GetFeedbacksRequest struct {
+	productID string `json:"idproduct" binding:"required"`
+}
+
+//ModerateFeedbackRequest structure
+type ModerateFeedbackRequest struct {
+	feedbackID string `json:"_id" binding:"required"`
 }
 
 // NewFeedback Create feedback
@@ -59,10 +69,15 @@ func NewFeedback(c *gin.Context) {
 	fdbk := feedback.New()
 	fdbk.IDProduct = body.IDProduct
 	fdbk.IDUser = body.IDUser
-	fdbk.text = body.text
-	fdbk.rate = body.rate
+	//fdbk.text = body.text
+	//fdbk.rate = body.rate
 
-	id, err := feedback.Insert(fdbk, body.cartID)
+	dao, err := feedback.GetDao()
+	if err != nil {
+		errors.Handle(c, err)
+		return
+	}
+	id, err := dao.Insert(fdbk, body.cartID)
 
 	if err != nil {
 		errors.Handle(c, err)
@@ -112,6 +127,8 @@ func GetFeedbacks(c *gin.Context) {
 		return
 	}
 
+	body := GetFeedbacksRequest{}
+
 	if err := c.ShouldBindJSON(&body); err != nil {
 		errors.Handle(c, err)
 		return
@@ -119,10 +136,16 @@ func GetFeedbacks(c *gin.Context) {
 
 	productID := c.Param("productID")
 
-	var data *feedback.Feedback
+	var data []*feedback.Feedback
 	var err error
 
-	data, err = feedback.Find(productID)
+	dao, err := feedback.GetDao()
+	if err != nil {
+		errors.Handle(c, err)
+		return
+	}
+
+	data, err = dao.Find(productID)
 
 	if err != nil {
 		errors.Handle(c, err)
@@ -162,6 +185,8 @@ func ModerateFeedback(c *gin.Context) {
 		return
 	}
 
+	body := ModerateFeedbackRequest{}
+
 	if err := c.ShouldBindJSON(&body); err != nil {
 		errors.Handle(c, err)
 		return
@@ -169,10 +194,15 @@ func ModerateFeedback(c *gin.Context) {
 
 	feedbackID := c.Param("feedbackID")
 
-	var data *feedback.Feedback
 	var err error
 
-	id, err := feedback.FindByIDAndUpdate(feedbackID)
+	dao, err := feedback.GetDao()
+	if err != nil {
+		errors.Handle(c, err)
+		return
+	}
+
+	id, err := dao.FindByIDAndUpdate(feedbackID)
 
 	if err != nil {
 		errors.Handle(c, err)

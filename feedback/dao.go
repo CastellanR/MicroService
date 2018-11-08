@@ -5,14 +5,24 @@ import (
 	"log"
 
 	"github.com/CastellanR/UserFeedback-Microservice/tools/db"
-	"github.com/CastellanR/UserFeedback-Microservice/tools/errors"
 	"github.com/mongodb/mongo-go-driver/bson"
 	"github.com/mongodb/mongo-go-driver/bson/objectid"
 	"github.com/mongodb/mongo-go-driver/mongo"
 )
 
-// New dao es interno a este modulo, nadie fuera del modulo tiene acceso
-func getDao() (db.Collection, error) {
+type daoStruct struct {
+	collection db.Collection
+}
+
+//Dao s
+type Dao interface {
+	Insert(feedback *Feedback, cartID string) (string, error)
+	FindByIDAndUpdate(feedbackID string) (string, error)
+	Find(productID string) ([]*Feedback, error)
+}
+
+//GetDao sda
+func GetDao() (Dao, error) {
 	database, err := db.Get()
 	if err != nil {
 		return nil, err
@@ -36,28 +46,30 @@ func getDao() (db.Collection, error) {
 	}
 
 	coll := db.WrapCollection(collection)
-	return coll, nil
+	return daoStruct{
+		collection: coll,
+	}, nil
 }
 
 // Insert into Database
-func Insert(feedback *Feedback, cartID string) (string, error) {
+func (d daoStruct) Insert(feedback *Feedback, cartID string) (string, error) {
 
 	if err := feedback.validateSchema(); err != nil {
 		return "", err
 	}
 
-	if _, err := getDao().InsertOne(context.Background(), feed); err != nil {
-		return nil, err
+	if _, err := d.collection.InsertOne(context.Background(), feedback); err != nil {
+		return "", err
 	}
 
-	return feed.ID, nil
+	return feedback.ID.String(), nil
 }
 
 // Find  and return the feedbacks from database
-func Find(productID string) ([]*Feedback, error) {
+func (d daoStruct) Find(productID string) ([]*Feedback, error) {
 
 	filter := bson.NewDocument(bson.EC.String("productID", productID))
-	cur, err := getDao().Find(context.Background(), filter, nil)
+	cur, err := d.collection.Find(context.Background(), filter, nil)
 	defer cur.Close(context.Background())
 
 	if err != nil {
@@ -77,18 +89,19 @@ func Find(productID string) ([]*Feedback, error) {
 }
 
 // FindByIDAndUpdate  and update a feedback from database
-func FindByIDAndUpdate(feedbackID string) (string, error) {
+func (d daoStruct) FindByIDAndUpdate(feedbackID string) (string, error) {
 
 	_id, err := objectid.FromHex(feedbackID)
 
 	if err != nil {
-		return nil, errors.ErrID
+		return "", err
 	}
+	feedback := &Feedback{}
 
 	filter := bson.NewDocument(bson.EC.ObjectID("_id", _id))
-	change := bson.NewDocument(bson.EC.String("moderated", true))
+	change := bson.NewDocument(bson.EC.Boolean("moderated", true))
 
-	feedback, err := getDao().FindOneAndUpdate(context.Background(), filter, change)
+	err = d.collection.FindOneAndUpdate(context.Background(), filter, change).Decode(feedback)
 
 	if err != nil {
 		return "", err

@@ -12,7 +12,7 @@ import (
 type Feedback struct {
 	ID        objectid.ObjectID `bson:"_id"`
 	IDUser    string            `bson:"idUser" validate:"required"`
-	text      string            `bson:"message" validate:"required"`
+	text      string            `bson:"text" validate:"required"`
 	IDProduct string            `bson:"idProduct" validate:"required"`
 	rate      int               `bson:"rate"  validate:"required"`
 	moderated bool              `bson:"moderated" validate:"required"`
