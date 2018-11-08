@@ -8,6 +8,7 @@ import (
 	"github.com/CastellanR/UserFeedback-Microservice/tools/env"
 	"github.com/mongodb/mongo-go-driver/core/topology"
 	"github.com/mongodb/mongo-go-driver/mongo"
+	"github.com/mongodb/mongo-go-driver/mongo/clientopt"
 )
 
 var database *mongo.Database
@@ -17,8 +18,7 @@ func Get() (*mongo.Database, error) {
 	if database == nil {
 		client, err := mongo.NewClientWithOptions(
 			env.Get().MongoURL,
-			mongo.ClientOpt.ServerSelectionTimeout(time.Second),
-		)
+			clientopt.ServerSelectionTimeout(1*time.Second))
 		if err != nil {
 			log.Fatal(err)
 			return nil, err

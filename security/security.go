@@ -15,7 +15,7 @@ import (
 
 var cache = gocache.New(60*time.Minute, 10*time.Minute)
 
-// User
+// User sad
 type User struct {
 	ID          string   `json:"id"  validate:"required"`
 	Name        string   `json:"name"  validate:"required"`

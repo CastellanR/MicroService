@@ -245,18 +245,6 @@
   version = "v0.0.17"
 
 [[projects]]
-  branch = "master"
-  digest = "1:55e4f1bad35331a0f03fa987a0317156b7ec8f68c62b62f5cd1dc43e5586d142"
-  name = "github.com/CastellanR/UserFeedbackMicroservice"
-  packages = [
-    "tools/db",
-    "tools/env",
-    "tools/errors",
-  ]
-  pruneopts = "UT"
-  revision = "aa3c13c550dadd4665120dd9b704c5ab3b286456"
-
-[[projects]]
   digest = "1:808cdddf087fb64baeae67b8dfaee2069034d9704923a3cb8bd96a995421a625"
   name = "github.com/patrickmn/go-cache"
   packages = ["."]
@@ -481,11 +469,8 @@
     "github.com/itsjamie/gin-cors",
     "github.com/mongodb/mongo-go-driver/bson",
     "github.com/mongodb/mongo-go-driver/bson/objectid",
-    "github.com/mongodb/mongo-go-driver/core/option",
     "github.com/mongodb/mongo-go-driver/core/topology",
     "github.com/mongodb/mongo-go-driver/mongo",
-    "github.com/nmarsollier/authgo/tools/db",
-    "github.com/nmarsollier/authgo/tools/errors",
     "github.com/patrickmn/go-cache",
     "github.com/streadway/amqp",
     "gopkg.in/go-playground/validator.v9",

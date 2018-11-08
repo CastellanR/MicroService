@@ -2,6 +2,8 @@ package env
 
 import (
 	"encoding/json"
+	"fmt"
+	"log"
 	"os"
 )
 
@@ -9,20 +11,22 @@ import (
 type Configuration struct {
 	Port              int    `json:"port"`
 	RabbitURL         string `json:"rabbitUrl"`
-	RedisURL          string `json:"redisUrl"`
+	MongoURL          string `json:"mongoUrl"`
 	SecurityServerURL string `json:"securityServerUrl"`
 	WWWWPath          string `json:"wwwPath"`
+	JWTSecret         string `json:"jwtSecret"`
 }
 
 var config *Configuration
 
 func new() *Configuration {
 	return &Configuration{
-		Port:              3001,
+		Port:              3000,
 		RabbitURL:         "amqp://localhost",
-		RedisURL:          "localhost:6379",
-		SecurityServerURL: "http://localhost:3000",
+		MongoURL:          "mongodb://localhost:27017",
 		WWWWPath:          "www",
+		SecurityServerURL: "http://localhost:3000",
+		JWTSecret:         "ecb6d3479ac3823f1da7f314d871989b",
 	}
 }
 
@@ -41,15 +45,19 @@ func Get() *Configuration {
 func Load(fileName string) bool {
 	file, err := os.Open(fileName)
 	if err != nil {
+		log.Output(1, fmt.Sprintf("%s : %s", fileName, err.Error()))
 		return false
 	}
+	defer file.Close()
 
 	loaded := new()
 	err = json.NewDecoder(file).Decode(&loaded)
 	if err != nil {
+		log.Output(1, fmt.Sprintf("%s : %s", fileName, err.Error()))
 		return false
 	}
 
 	config = loaded
+	log.Output(1, fmt.Sprintf("%s cargado correctamente", fileName))
 	return true
 }
