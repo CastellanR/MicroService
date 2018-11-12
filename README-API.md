@@ -33,9 +33,9 @@ Body
 
 ```
 {
-  "idUser" : "{ User Id }",
+  "userId" : "{ User Id }",
   "text" :  "{ Feedback Content }",
-  "idProduct" : "{ Product Id }",
+  "productId" : "{ Product Id }",
   "rate" : "{ Feedback Rate }",
 }
 ```
@@ -91,7 +91,7 @@ HTTP/1.1 401 Unauthorized
 
 <p>Get feedbacks of a product</p>
 
-	GET /v1/feedback/:productid
+	GET /v1/feedback/:productId
 
 
 
@@ -101,7 +101,7 @@ Body
 
 ```
 {
-  "idProduct" : "{ Product Id }",
+  "productId" : "{ Product Id }",
 }
 ```
 Auth Header
@@ -118,9 +118,9 @@ Response
 {
   {
     "id" : "{ Feedback Id }"
-    "idUser" : "{ User Id }",
+    "userId" : "{ User Id }",
     "text" :  "{ Feedback Content }",
-    "idProduct" : "{ Product Id }",
+    "productId" : "{ Product Id }",
     "rate" : "{ Feedback Rate }",
     "moderated" : "{ Feedback Moderate Status Boolean }"
     "created" : "{ Creation Date }",
@@ -272,9 +272,9 @@ Message
    "queue": "feedback"
    "message": {
         "id" : "{ Feedback Id }"
-        "idUser" : "{ User Id }",
+        "userId" : "{ User Id }",
         "text" :  "{ Feedback Content }",
-        "idProduct" : "{ Product Id }",
+        "productId" : "{ Product Id }",
         "rate" : "{ Feedback Rate }",
         "created" : "{ Creation Date }",
         "updated" : "{ Modification Date }",

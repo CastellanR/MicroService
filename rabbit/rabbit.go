@@ -21,15 +21,23 @@ type message struct {
 }
 
 type feedbackParams struct {
-	productID string `json:"productID"`
-	cartID    string `json:"cardID"`
+	productId string `json:"productId"`
 }
 
 // Init se queda escuchando broadcasts de logout
 func Init() {
 	go func() {
 		for {
+			fmt.Println("logout")
 			listenLogout()
+			fmt.Println("RabbitMQ conectando en 5 segundos.")
+			time.Sleep(5 * time.Second)
+		}
+	}()
+	go func() {
+		for {
+			fmt.Println("prod")
+			listenProductValidation()
 			fmt.Println("RabbitMQ conectando en 5 segundos.")
 			time.Sleep(5 * time.Second)
 		}
@@ -44,18 +52,17 @@ func Init() {
  *
  * @apiSuccessExample {json} Message
  *     {
-			"type": "article-exist",
-			"queue": "cart",
-			"exchange": "cart",
-			"message" : {
-				"referenceId": "{cartId}",
+ *			"type": "article-exist",
+ *			"queue": "catalog",
+ *			"exchange": "",
+ *			"message" : {
  *             	"articleId": "{articleId}",
-			}
-		}
-*/
+ *			}
+ *		}
+ */
 
 // ProductValidation validate the product
-func ProductValidation(productID string, cartID string) error {
+func ProductValidation(productId string) error {
 	conn, err := amqp.Dial(env.Get().RabbitURL)
 	if err != nil {
 		return err
@@ -68,31 +75,38 @@ func ProductValidation(productID string, cartID string) error {
 	}
 	defer chn.Close()
 
-	queue, err := chn.QueueDeclare(
-		"catalog", // name
-		true,      // durable
-		false,     // delete when unused
-		false,     // exclusive
-		false,     // no-wait
-		nil,       // arguments
+	err = chn.ExchangeDeclare(
+		"article-exist", // name
+		"direct",        // type
+		true,            // durable
+		false,           // auto-deleted
+		false,           // internal
+		false,           // no-wait
+		nil,             // arguments
 	)
+
 	if err != nil {
 		return err
 	}
 
 	msg := feedbackParams{}
-	msg.cartID = cartID
-	msg.productID = productID
+	msg.productId = productId
+
+	resp, err := json.Marshal(msg)
+
+	if err != nil {
+		return err
+	}
 
 	err = chn.Publish(
-		"",         // exchange
-		queue.Name, // routing key
-		false,      // mandatory
-		false,      // immediate
+		"article-exist", // exchange
+		"",              // routing key
+		false,           // mandatory
+		false,           // immediate
 		amqp.Publishing{
 			DeliveryMode: amqp.Persistent,
 			ContentType:  "text/plain",
-			Body:         []byte(`msg`),
+			Body:         []byte(resp),
 		},
 	)
 
@@ -100,11 +114,13 @@ func ProductValidation(productID string, cartID string) error {
 		return err
 	}
 
+	fmt.Println("Envio de validacion")
+
 	return err
 }
 
-/**
- * @api {fanout} feedback/ Send Feedback
+/*
+ * @api {topic} feedback/ Send Feedback
  * @apiGroup RabbitMQ POST
  *
  * @apiDescription Sending new feedback.
@@ -120,7 +136,8 @@ func ProductValidation(productID string, cartID string) error {
 		}
 */
 
-func sendFeedback(feedback string) error {
+//SendFeedback send the feedback to rate microservice
+func SendFeedback(feedback string) error {
 	conn, err := amqp.Dial(env.Get().RabbitURL)
 	if err != nil {
 		return err
@@ -194,6 +211,16 @@ func listenProductValidation() error {
 	}
 	defer chn.Close()
 
+	err = chn.ExchangeDeclare(
+		"article-exist", // name
+		"direct",        // type
+		true,            // durable
+		false,           // auto-deleted
+		false,           // internal
+		false,           // no-wait
+		nil,             // arguments
+	)
+
 	queue, err := chn.QueueDeclare(
 		"catalog", // name
 		true,      // durable
@@ -202,6 +229,18 @@ func listenProductValidation() error {
 		false,     // no-wait
 		nil,       // arguments
 	)
+
+	if err != nil {
+		return err
+	}
+
+	err = chn.QueueBind(
+		queue.Name,      // queue name
+		"",              // routing key
+		"article-exist", // exchange
+		false,
+		nil)
+
 	if err != nil {
 		return err
 	}
@@ -221,7 +260,7 @@ func listenProductValidation() error {
 	}
 
 	for d := range msg {
-		log.Printf("Received a message: %s", d.Body)
+		log.Printf("Received a message Validation Product: %s", d.Body)
 	}
 
 	return nil

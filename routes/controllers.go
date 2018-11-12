@@ -8,21 +8,20 @@ import (
 
 //NewFeedbackRequest structure
 type NewFeedbackRequest struct {
-	IDUser    string `json:"idUser" binding:"required"`
-	text      string `json:"text" binding:"required"`
-	IDProduct string `json:"idproduct" binding:"required"`
-	rate      int    `json:"rate" binding:"required"`
-	cartID    string
+	UserID    string `json:"userId" binding:"required"`
+	Text      string `json:"text" binding:"required"`
+	ProductID string `json:"productId" binding:"required"`
+	Rate      int    `json:"rate" binding:"required"`
 }
 
 //GetFeedbacksRequest structure
 type GetFeedbacksRequest struct {
-	productID string `json:"idproduct" binding:"required"`
+	productID string `json:"productId" binding:"required"`
 }
 
 //ModerateFeedbackRequest structure
 type ModerateFeedbackRequest struct {
-	feedbackID string `json:"_id" binding:"required"`
+	FeedbackID string `json:"_id" binding:"required"`
 }
 
 // NewFeedback Create feedback
@@ -35,9 +34,9 @@ type ModerateFeedbackRequest struct {
  *
  * @apiExample {json} Body
  *    {
-		"idUser" : "{ User Id }",
+		"userId" : "{ User Id }",
 		"text" :  "{ Feedback Content }",
-		"idProduct" : "{ Product Id }",
+		"productId" : "{ Product Id }",
 		"rate" : "{ Feedback Rate }",
 		}
 
@@ -56,28 +55,28 @@ func NewFeedback(c *gin.Context) {
 
 	body := NewFeedbackRequest{}
 
-	if err := validateAuthentication(c); err != nil {
+	/*if err := validateAuthentication(c); err != nil {
 		errors.Handle(c, err)
 		return
 	}
-
+	*/
 	if err := c.ShouldBindJSON(&body); err != nil {
 		errors.Handle(c, err)
 		return
 	}
 
 	fdbk := feedback.New()
-	fdbk.IDProduct = body.IDProduct
-	fdbk.IDUser = body.IDUser
-	//fdbk.text = body.text
-	//fdbk.rate = body.rate
+	fdbk.ProductID = body.ProductID
+	fdbk.UserID = body.UserID
+	fdbk.Text = body.Text
+	fdbk.Rate = body.Rate
 
 	dao, err := feedback.GetDao()
 	if err != nil {
 		errors.Handle(c, err)
 		return
 	}
-	id, err := dao.Insert(fdbk, body.cartID)
+	id, err := dao.Insert(fdbk)
 
 	if err != nil {
 		errors.Handle(c, err)
@@ -91,7 +90,7 @@ func NewFeedback(c *gin.Context) {
 
 // GetFeedbacks Get feedback list of a product
 /**
- * @api {get} /v1/feedback/:productID Get Feedbacks
+ * @api {get} /v1/feedback/:productId Get Feedbacks
  * @apiName Get Feedbacks
  * @apiGroup Feedback
  *
@@ -99,16 +98,16 @@ func NewFeedback(c *gin.Context) {
  *
  * @apiExample {json} Body
  *    {
-		"idProduct" : "{ Product Id }",
+		"productId" : "{ Product Id }",
 		}
 *
  * @apiSuccessExample {json} Response
 * {
 	{
 	"id" : "{ Feedback Id }"
-	"idUser" : "{ User Id }",
+	"userId" : "{ User Id }",
 	"text" :  "{ Feedback Content }",
-	"idProduct" : "{ Product Id }",
+	"productId" : "{ Product Id }",
 	"rate" : "{ Feedback Rate }",
 	"moderated" : "{ Feedback Moderate Status Boolean }"
 	"created" : "{ Creation Date }",
@@ -122,10 +121,10 @@ func NewFeedback(c *gin.Context) {
  * @apiUse OtherErrors
 */
 func GetFeedbacks(c *gin.Context) {
-	if err := validateAuthentication(c); err != nil {
+	/*if err := validateAuthentication(c); err != nil {
 		errors.Handle(c, err)
 		return
-	}
+	}*/
 
 	body := GetFeedbacksRequest{}
 
@@ -134,7 +133,7 @@ func GetFeedbacks(c *gin.Context) {
 		return
 	}
 
-	productID := c.Param("productID")
+	productID := c.Param("productId")
 
 	var data []*feedback.Feedback
 	var err error
@@ -180,10 +179,10 @@ func GetFeedbacks(c *gin.Context) {
  * @apiUse OtherErrors
 */
 func ModerateFeedback(c *gin.Context) {
-	if err := validateAuthentication(c); err != nil {
+	/*if err := validateAuthentication(c); err != nil {
 		errors.Handle(c, err)
 		return
-	}
+	}*/
 
 	body := ModerateFeedbackRequest{}
 

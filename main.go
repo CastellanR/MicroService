@@ -42,7 +42,7 @@ func main() {
 	server.Use(static.Serve("/", static.LocalFile(env.Get().WWWWPath, true)))
 
 	server.POST("/v1/feedback", routes.NewFeedback)
-	server.GET("/v1/feedback/:productid", routes.GetFeedbacks)
+	server.GET("/v1/feedback/:productId", routes.GetFeedbacks)
 	server.POST("/v1/feedback/:id", routes.ModerateFeedback)
 
 	server.Run(fmt.Sprintf(":%d", env.Get().Port))

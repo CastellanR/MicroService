@@ -11,26 +11,26 @@ import (
 // Feedback structure
 type Feedback struct {
 	ID        objectid.ObjectID `bson:"_id"`
-	IDUser    string            `bson:"idUser" validate:"required"`
-	text      string            `bson:"text" validate:"required"`
-	IDProduct string            `bson:"idProduct" validate:"required"`
-	rate      int               `bson:"rate"  validate:"required"`
-	moderated bool              `bson:"moderated" validate:"required"`
-	created   time.Time         `bson:"created" validate:"required"`
-	updated   time.Time         `bson:"updated" validate:"required"`
+	UserID    string            `bson:"userId" validate:"required"`
+	Text      string            `bson:"text" validate:"required"`
+	ProductID string            `bson:"productId" validate:"required"`
+	Rate      int               `bson:"rate"  validate:"required"`
+	Moderated bool              `bson:"moderated"`
+	Created   time.Time         `bson:"created" validate:"required"`
+	Updated   time.Time         `bson:"updated" validate:"required"`
 }
 
 // New create feedback
 func New() *Feedback {
 	return &Feedback{
 		ID:        objectid.New(),
-		IDUser:    "",
-		text:      "",
-		IDProduct: "",
-		rate:      0,
-		moderated: false,
-		created:   time.Now(),
-		updated:   time.Now(),
+		UserID:    "",
+		Text:      "",
+		ProductID: "",
+		Rate:      0,
+		Moderated: false,
+		Created:   time.Now(),
+		Updated:   time.Now(),
 	}
 }
 

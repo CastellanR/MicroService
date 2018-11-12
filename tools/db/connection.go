@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"time"
 
@@ -18,7 +19,7 @@ func Get() (*mongo.Database, error) {
 	if database == nil {
 		client, err := mongo.NewClientWithOptions(
 			env.Get().MongoURL,
-			clientopt.ServerSelectionTimeout(1*time.Second))
+			clientopt.ServerSelectionTimeout(time.Second))
 		if err != nil {
 			log.Fatal(err)
 			return nil, err
@@ -29,7 +30,8 @@ func Get() (*mongo.Database, error) {
 			return nil, err
 		}
 
-		database = client.Database("feedbackDB")
+		database = client.Database("feedback")
+		fmt.Println("bd")
 	}
 	return database, nil
 }

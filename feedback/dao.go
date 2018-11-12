@@ -2,8 +2,11 @@ package feedback
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"log"
 
+	"github.com/CastellanR/UserFeedback-Microservice/rabbit"
 	"github.com/CastellanR/UserFeedback-Microservice/tools/db"
 	"github.com/mongodb/mongo-go-driver/bson"
 	"github.com/mongodb/mongo-go-driver/bson/objectid"
@@ -16,7 +19,7 @@ type daoStruct struct {
 
 //Dao s
 type Dao interface {
-	Insert(feedback *Feedback, cartID string) (string, error)
+	Insert(feedback *Feedback) (string, error)
 	FindByIDAndUpdate(feedbackID string) (string, error)
 	Find(productID string) ([]*Feedback, error)
 }
@@ -34,10 +37,10 @@ func GetDao() (Dao, error) {
 		context.Background(),
 		mongo.IndexModel{
 			Keys: bson.NewDocument(
-				bson.EC.String("idProduct", ""),
+				bson.EC.String("productId", ""),
 			),
 			Options: bson.NewDocument(
-				bson.EC.Boolean("unique", true),
+				bson.EC.Boolean("unique", false),
 			),
 		},
 	)
@@ -52,9 +55,13 @@ func GetDao() (Dao, error) {
 }
 
 // Insert into Database
-func (d daoStruct) Insert(feedback *Feedback, cartID string) (string, error) {
+func (d daoStruct) Insert(feedback *Feedback) (string, error) {
 
 	if err := feedback.validateSchema(); err != nil {
+		return "", err
+	}
+
+	if err := rabbit.ProductValidation(feedback.ProductID); err != nil {
 		return "", err
 	}
 
@@ -62,13 +69,20 @@ func (d daoStruct) Insert(feedback *Feedback, cartID string) (string, error) {
 		return "", err
 	}
 
+	feed, err := json.Marshal(feedback)
+	if err != nil {
+		return "", err
+	}
+
+	rabbit.SendFeedback(string(feed[:]))
 	return feedback.ID.String(), nil
 }
 
 // Find  and return the feedbacks from database
 func (d daoStruct) Find(productID string) ([]*Feedback, error) {
 
-	filter := bson.NewDocument(bson.EC.String("productID", productID))
+	fmt.Println(productID)
+	filter := bson.NewDocument(bson.EC.String("productId", productID))
 	cur, err := d.collection.Find(context.Background(), filter, nil)
 	defer cur.Close(context.Background())
 
@@ -77,6 +91,7 @@ func (d daoStruct) Find(productID string) ([]*Feedback, error) {
 	}
 
 	feedbacks := []*Feedback{}
+	fmt.Println(feedbacks)
 	for cur.Next(context.Background()) {
 		feedback := &Feedback{}
 		if err := cur.Decode(feedback); err != nil {
