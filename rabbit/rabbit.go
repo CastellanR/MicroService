@@ -172,6 +172,16 @@ func SendFeedback(feedback string) error {
 	}
 	defer chn.Close()
 
+	msg := message{}
+	msg.Type = "new-feedback"
+	msg.Message = feedback
+
+	message, err := json.Marshal(msg)
+
+	if err != nil {
+		return err
+	}
+
 	err = chn.ExchangeDeclare(
 		"feedback_topic", // name
 		"topic",          // type
@@ -217,7 +227,7 @@ func SendFeedback(feedback string) error {
 		false,            // immediate
 		amqp.Publishing{
 			ContentType: "text/plain",
-			Body:        []byte(feedback),
+			Body:        []byte(message),
 		},
 	)
 
@@ -282,9 +292,9 @@ func listenProductValidation() error {
 	}
 
 	err = chn.QueueBind(
-		queue.Name,      // queue name
-		"",              // routing key
-		"article-exist", // exchange
+		queue.Name,         // queue name
+		"",                 // routing key
+		"feedback-product", // exchange
 		false,
 		nil)
 
