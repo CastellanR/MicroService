@@ -25,7 +25,7 @@ func new() *Configuration {
 		RabbitURL:         "amqp://localhost",
 		MongoURL:          "mongodb://localhost:27017",
 		WWWWPath:          "www",
-		SecurityServerURL: "http://localhost:3042",
+		SecurityServerURL: "http://localhost:3000",
 		JWTSecret:         "ecb6d3479ac3823f1da7f314d871989b",
 	}
 }
