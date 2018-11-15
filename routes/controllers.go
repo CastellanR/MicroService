@@ -1,6 +1,8 @@
 package routes
 
 import (
+	"fmt"
+
 	"github.com/CastellanR/UserFeedback-Microservice/feedback"
 	"github.com/CastellanR/UserFeedback-Microservice/tools/errors"
 	"github.com/gin-gonic/gin"
@@ -16,7 +18,7 @@ type NewFeedbackRequest struct {
 
 //GetFeedbacksRequest structure
 type GetFeedbacksRequest struct {
-	productID string `json:"productId" binding:"required"`
+	ProductID string `json:"productId" binding:"required"`
 }
 
 //ModerateFeedbackRequest structure
@@ -126,13 +128,6 @@ func GetFeedbacks(c *gin.Context) {
 		return
 	}*/
 
-	body := GetFeedbacksRequest{}
-
-	if err := c.ShouldBindJSON(&body); err != nil {
-		errors.Handle(c, err)
-		return
-	}
-
 	productID := c.Param("productId")
 
 	var data []*feedback.Feedback
@@ -184,14 +179,7 @@ func ModerateFeedback(c *gin.Context) {
 		return
 	}*/
 
-	body := ModerateFeedbackRequest{}
-
-	if err := c.ShouldBindJSON(&body); err != nil {
-		errors.Handle(c, err)
-		return
-	}
-
-	feedbackID := c.Param("feedbackID")
+	feedbackID := c.Param("_id")
 
 	var err error
 
@@ -204,6 +192,7 @@ func ModerateFeedback(c *gin.Context) {
 	id, err := dao.FindByIDAndUpdate(feedbackID)
 
 	if err != nil {
+		fmt.Println("error after", err)
 		errors.Handle(c, err)
 		return
 	}

@@ -61,7 +61,7 @@ func (d daoStruct) Insert(feedback *Feedback) (string, error) {
 		return "", err
 	}
 
-	if err := rabbit.ProductValidation(feedback.ProductID); err != nil {
+	if err := rabbit.ProductValidation(feedback.ProductID, feedback.ID); err != nil {
 		return "", err
 	}
 
@@ -111,12 +111,14 @@ func (d daoStruct) FindByIDAndUpdate(feedbackID string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	feedback := &Feedback{}
 
-	filter := bson.NewDocument(bson.EC.ObjectID("_id", _id))
-	change := bson.NewDocument(bson.EC.Boolean("moderated", true))
-
-	err = d.collection.FindOneAndUpdate(context.Background(), filter, change).Decode(feedback)
+	_, err = d.collection.UpdateOne(context.Background(),
+		bson.NewDocument(bson.EC.ObjectID("_id", _id)),
+		bson.NewDocument(
+			bson.EC.SubDocumentFromElements("$set",
+				bson.EC.Boolean("moderated", true),
+			),
+		))
 
 	if err != nil {
 		return "", err

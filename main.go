@@ -43,7 +43,7 @@ func main() {
 
 	server.POST("/v1/feedback", routes.NewFeedback)
 	server.GET("/v1/feedback/:productId", routes.GetFeedbacks)
-	server.POST("/v1/feedback/:id", routes.ModerateFeedback)
+	server.POST("/v1/feedback/:_id", routes.ModerateFeedback)
 
 	server.Run(fmt.Sprintf(":%d", env.Get().Port))
 }

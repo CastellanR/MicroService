@@ -9,6 +9,7 @@ import (
 	"github.com/CastellanR/UserFeedback-Microservice/security"
 	"github.com/CastellanR/UserFeedback-Microservice/tools/env"
 	"github.com/CastellanR/UserFeedback-Microservice/tools/errors"
+	"github.com/mongodb/mongo-go-driver/bson/objectid"
 	"github.com/streadway/amqp"
 )
 
@@ -20,8 +21,16 @@ type message struct {
 	Message string `json:"message"`
 }
 
-type feedbackParams struct {
-	productId string `json:"productId"`
+type msj struct {
+	FeedbackID []byte `json:"referenceId"`
+	ProductID  string `json:"articleId"`
+}
+
+type response struct {
+	Type     string `json:"type"`
+	Exchange string `json:"exchange"`
+	Queue    string `json:"queue"`
+	Message  msj    `json:"message"`
 }
 
 // Init se queda escuchando broadcasts de logout
@@ -62,47 +71,60 @@ func Init() {
  */
 
 // ProductValidation validate the product
-func ProductValidation(productId string) error {
+func ProductValidation(productID string, feedbackID objectid.ObjectID) error {
 	conn, err := amqp.Dial(env.Get().RabbitURL)
 	if err != nil {
 		return err
 	}
 	defer conn.Close()
 
+	fmt.Println("error del channel")
 	chn, err := conn.Channel()
 	if err != nil {
 		return err
 	}
 	defer chn.Close()
 
-	err = chn.ExchangeDeclare(
-		"article-exist", // name
-		"direct",        // type
-		true,            // durable
-		false,           // auto-deleted
-		false,           // internal
-		false,           // no-wait
-		nil,             // arguments
-	)
+	msg := response{}
+	msg.Message.ProductID = productID
+	msg.Exchange = "feedback-product"
+	msg.Queue = "feedback-product"
+	msg.Type = "article-exist"
+	feed, err := json.Marshal(feedbackID)
 
+	fmt.Println(feed)
 	if err != nil {
 		return err
 	}
 
-	msg := feedbackParams{}
-	msg.productId = productId
+	msg.Message.FeedbackID = feed
 
 	resp, err := json.Marshal(msg)
-
+	fmt.Println("error del marshaleo")
 	if err != nil {
 		return err
 	}
 
+	err = chn.ExchangeDeclare(
+		"catalog", // name
+		"direct",  // type
+		false,     // durable
+		false,     // auto-deleted
+		false,     // internal
+		false,     // no-wait
+		nil,       // arguments
+	)
+	fmt.Println("error del exchange")
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("%s\n", resp)
 	err = chn.Publish(
-		"article-exist", // exchange
-		"",              // routing key
-		false,           // mandatory
-		false,           // immediate
+		"catalog", // exchange
+		"catalog", // routing key
+		false,     // mandatory
+		false,     // immediate
 		amqp.Publishing{
 			DeliveryMode: amqp.Persistent,
 			ContentType:  "text/plain",
@@ -159,6 +181,31 @@ func SendFeedback(feedback string) error {
 		false,            // no-wait
 		nil,              // arguments
 	)
+
+	if err != nil {
+		return err
+	}
+
+	queue, err := chn.QueueDeclare(
+		"feedback", // name
+		true,       // durable
+		false,      // delete when unused
+		false,      // exclusive
+		false,      // no-wait
+		nil,        // arguments
+	)
+
+	if err != nil {
+		return err
+	}
+
+	err = chn.QueueBind(
+		queue.Name,       // queue name
+		"feedback",       // routing key
+		"feedback_topic", // exchange
+		false,
+		nil)
+
 	if err != nil {
 		return err
 	}
@@ -212,22 +259,22 @@ func listenProductValidation() error {
 	defer chn.Close()
 
 	err = chn.ExchangeDeclare(
-		"article-exist", // name
-		"direct",        // type
-		true,            // durable
-		false,           // auto-deleted
-		false,           // internal
-		false,           // no-wait
-		nil,             // arguments
+		"feedback-product", // name
+		"direct",           // type
+		true,               // durable
+		false,              // auto-deleted
+		false,              // internal
+		false,              // no-wait
+		nil,                // arguments
 	)
 
 	queue, err := chn.QueueDeclare(
-		"catalog", // name
-		true,      // durable
-		false,     // delete when unused
-		false,     // exclusive
-		false,     // no-wait
-		nil,       // arguments
+		"feedback-product", // name
+		false,              // durable
+		false,              // delete when unused
+		false,              // exclusive
+		false,              // no-wait
+		nil,                // arguments
 	)
 
 	if err != nil {
