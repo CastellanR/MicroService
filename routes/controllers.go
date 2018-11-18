@@ -1,8 +1,6 @@
 package routes
 
 import (
-	"fmt"
-
 	"github.com/CastellanR/UserFeedback-Microservice/feedback"
 	"github.com/CastellanR/UserFeedback-Microservice/tools/errors"
 	"github.com/gin-gonic/gin"
@@ -57,11 +55,11 @@ func NewFeedback(c *gin.Context) {
 
 	body := NewFeedbackRequest{}
 
-	/*if err := validateAuthentication(c); err != nil {
+	if err := validateAuthentication(c); err != nil {
 		errors.Handle(c, err)
 		return
 	}
-	*/
+
 	if err := c.ShouldBindJSON(&body); err != nil {
 		errors.Handle(c, err)
 		return
@@ -78,16 +76,14 @@ func NewFeedback(c *gin.Context) {
 		errors.Handle(c, err)
 		return
 	}
-	id, err := dao.Insert(fdbk)
+	err = dao.Insert(fdbk)
 
 	if err != nil {
 		errors.Handle(c, err)
 		return
 	}
 
-	c.JSON(200, gin.H{
-		"id": id,
-	})
+	c.JSON(200, fdbk.ID)
 }
 
 // GetFeedbacks Get feedback list of a product
@@ -123,10 +119,10 @@ func NewFeedback(c *gin.Context) {
  * @apiUse OtherErrors
 */
 func GetFeedbacks(c *gin.Context) {
-	/*if err := validateAuthentication(c); err != nil {
+	if err := validateAuthentication(c); err != nil {
 		errors.Handle(c, err)
 		return
-	}*/
+	}
 
 	productID := c.Param("productId")
 
@@ -174,10 +170,10 @@ func GetFeedbacks(c *gin.Context) {
  * @apiUse OtherErrors
 */
 func ModerateFeedback(c *gin.Context) {
-	/*if err := validateAuthentication(c); err != nil {
+	if err := validateAuthentication(c); err != nil {
 		errors.Handle(c, err)
 		return
-	}*/
+	}
 
 	feedbackID := c.Param("_id")
 
@@ -189,15 +185,12 @@ func ModerateFeedback(c *gin.Context) {
 		return
 	}
 
-	id, err := dao.FindByIDAndUpdate(feedbackID)
+	err = dao.FindByIDAndUpdate(feedbackID)
 
 	if err != nil {
-		fmt.Println("error after", err)
 		errors.Handle(c, err)
 		return
 	}
 
-	c.JSON(200, gin.H{
-		"id": id,
-	})
+	c.JSON(200, feedbackID)
 }

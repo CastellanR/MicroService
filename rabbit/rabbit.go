@@ -22,7 +22,7 @@ type message struct {
 }
 
 type msj struct {
-	FeedbackID []byte `json:"referenceId"`
+	FeedbackID string `json:"referenceId"`
 	ProductID  string `json:"articleId"`
 }
 
@@ -37,7 +37,6 @@ type response struct {
 func Init() {
 	go func() {
 		for {
-			fmt.Println("logout")
 			listenLogout()
 			fmt.Println("RabbitMQ conectando en 5 segundos.")
 			time.Sleep(5 * time.Second)
@@ -45,7 +44,6 @@ func Init() {
 	}()
 	go func() {
 		for {
-			fmt.Println("prod")
 			listenProductValidation()
 			fmt.Println("RabbitMQ conectando en 5 segundos.")
 			time.Sleep(5 * time.Second)
@@ -78,7 +76,6 @@ func ProductValidation(productID string, feedbackID objectid.ObjectID) error {
 	}
 	defer conn.Close()
 
-	fmt.Println("error del channel")
 	chn, err := conn.Channel()
 	if err != nil {
 		return err
@@ -92,15 +89,13 @@ func ProductValidation(productID string, feedbackID objectid.ObjectID) error {
 	msg.Type = "article-exist"
 	feed, err := json.Marshal(feedbackID)
 
-	fmt.Println(feed)
 	if err != nil {
 		return err
 	}
 
-	msg.Message.FeedbackID = feed
+	msg.Message.FeedbackID = string(feed)
 
 	resp, err := json.Marshal(msg)
-	fmt.Println("error del marshaleo")
 	if err != nil {
 		return err
 	}
@@ -114,12 +109,10 @@ func ProductValidation(productID string, feedbackID objectid.ObjectID) error {
 		false,     // no-wait
 		nil,       // arguments
 	)
-	fmt.Println("error del exchange")
 	if err != nil {
 		return err
 	}
 
-	fmt.Printf("%s\n", resp)
 	err = chn.Publish(
 		"catalog", // exchange
 		"catalog", // routing key
@@ -250,10 +243,11 @@ func SendFeedback(feedback string) error {
  *			"message" :
  *				{
  *					"articleId": "{articleId}",
+					"referenceId": "{referenceId}",
  *					"valid": True|False
  *				}
  *      }
- */
+*/
 
 func listenProductValidation() error {
 	conn, err := amqp.Dial(env.Get().RabbitURL)
@@ -271,7 +265,7 @@ func listenProductValidation() error {
 	err = chn.ExchangeDeclare(
 		"feedback-product", // name
 		"direct",           // type
-		true,               // durable
+		false,              // durable
 		false,              // auto-deleted
 		false,              // internal
 		false,              // no-wait

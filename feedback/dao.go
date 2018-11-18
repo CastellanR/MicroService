@@ -3,7 +3,6 @@ package feedback
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"log"
 
 	"github.com/CastellanR/UserFeedback-Microservice/rabbit"
@@ -19,8 +18,8 @@ type daoStruct struct {
 
 //Dao s
 type Dao interface {
-	Insert(feedback *Feedback) (string, error)
-	FindByIDAndUpdate(feedbackID string) (string, error)
+	Insert(feedback *Feedback) error
+	FindByIDAndUpdate(feedbackID string) error
 	Find(productID string) ([]*Feedback, error)
 }
 
@@ -55,34 +54,33 @@ func GetDao() (Dao, error) {
 }
 
 // Insert into Database
-func (d daoStruct) Insert(feedback *Feedback) (string, error) {
+func (d daoStruct) Insert(feedback *Feedback) error {
 
 	if err := feedback.validateSchema(); err != nil {
-		return "", err
+		return err
 	}
 
 	if err := rabbit.ProductValidation(feedback.ProductID, feedback.ID); err != nil {
-		return "", err
+		return err
 	}
 
 	if _, err := d.collection.InsertOne(context.Background(), feedback); err != nil {
-		return "", err
+		return err
 	}
 
 	feed, err := json.Marshal(feedback)
 	if err != nil {
-		return "", err
+		return err
 	}
 
 	rabbit.SendFeedback(string(feed[:]))
-	return feedback.ID.String(), nil
+	return nil
 }
 
 // Find  and return the feedbacks from database
 func (d daoStruct) Find(productID string) ([]*Feedback, error) {
 
-	fmt.Println(productID)
-	filter := bson.NewDocument(bson.EC.String("productId", productID))
+	filter := bson.NewDocument(bson.EC.String("productId", productID), bson.EC.Boolean("moderated", false))
 	cur, err := d.collection.Find(context.Background(), filter, nil)
 	defer cur.Close(context.Background())
 
@@ -91,7 +89,6 @@ func (d daoStruct) Find(productID string) ([]*Feedback, error) {
 	}
 
 	feedbacks := []*Feedback{}
-	fmt.Println(feedbacks)
 	for cur.Next(context.Background()) {
 		feedback := &Feedback{}
 		if err := cur.Decode(feedback); err != nil {
@@ -104,12 +101,12 @@ func (d daoStruct) Find(productID string) ([]*Feedback, error) {
 }
 
 // FindByIDAndUpdate  and update a feedback from database
-func (d daoStruct) FindByIDAndUpdate(feedbackID string) (string, error) {
+func (d daoStruct) FindByIDAndUpdate(feedbackID string) error {
 
 	_id, err := objectid.FromHex(feedbackID)
 
 	if err != nil {
-		return "", err
+		return err
 	}
 
 	_, err = d.collection.UpdateOne(context.Background(),
@@ -121,8 +118,8 @@ func (d daoStruct) FindByIDAndUpdate(feedbackID string) (string, error) {
 		))
 
 	if err != nil {
-		return "", err
+		return err
 	}
 
-	return feedbackID, nil
+	return nil
 }

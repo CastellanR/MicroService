@@ -11,7 +11,7 @@ import (
 // get token from Authorization header
 func getTokenHeader(c *gin.Context) (string, error) {
 	tokenString := c.GetHeader("Authorization")
-	if strings.Index(tokenString, "bearer ") != 0 {
+	if strings.Index(tokenString, "Bearer ") != 0 {
 		return "", errors.Unauthorized
 	}
 	return tokenString[7:], nil

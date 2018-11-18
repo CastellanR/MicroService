@@ -2,7 +2,6 @@ package db
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"time"
 
@@ -31,7 +30,6 @@ func Get() (*mongo.Database, error) {
 		}
 
 		database = client.Database("feedback")
-		fmt.Println("bd")
 	}
 	return database, nil
 }

@@ -191,8 +191,7 @@ Response
 ```
 HTTP/1.1 200 OK
 {
-  "id": "{ Feedback Id }",
-  "moderated" : "{ True }",
+  "id": "{ Feedback Id }"
 }
 ```
 400 Bad Request
@@ -244,9 +243,10 @@ Message
 ```
 {
   "type": "article-exist",
-  "queue": "feedback",
-  "exchange": "feedback",
+  "queue": "feedback-product",
+  "exchange": "feedback-product",
   "message" : {
+      "referenceId": "{referenceId}",
       "articleId": "{articleId}",
   }
 }
@@ -303,6 +303,7 @@ Message
   "type": "article-exist",
   "message" : {
       "articleId": "{articleId}",
+      "referenceId": "{referenceId}"
       "valid": True|False
   }
 }
